@@ -18,6 +18,13 @@
 #include "rgb_matrix_user.h"
 #include "keymap_user.h"
 
+//extern rgb_config_t rgblight_config;
+
+bool is_arrow_key(uint16_t keycode);
+bool is_special_key(uint16_t keycode);
+bool is_modifier_key(uint16_t keycode);
+bool is_spacebar(uint16_t keycode);
+
 keypos_t led_index_key_position[DRIVER_LED_TOTAL];
 
 void rgb_matrix_init_user(void) {
@@ -33,6 +40,29 @@ void rgb_matrix_init_user(void) {
 
 void rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
     uint8_t current_layer = get_highest_layer(layer_state);
+
+    if(get_arrow_color_enable())
+    {
+        HSV hsv = rgb_matrix_get_hsv();
+        hsv.h += get_arrow_hueshift();
+        RGB rgb = hsv_to_rgb(hsv);
+        rgb_matrix_set_color_by_keycode(led_min, led_max, WIN_BASE, is_arrow_key, rgb.r, rgb.g, rgb.b);
+    }
+    if(get_special_color_enable())
+    {
+        HSV hsv = rgb_matrix_get_hsv();
+        hsv.h += get_special_hueshift();
+        RGB rgb = hsv_to_rgb(hsv);
+        rgb_matrix_set_color_by_keycode(led_min, led_max, WIN_BASE, is_special_key, rgb.r, rgb.g, rgb.b);
+    }
+    if(get_modifier_color_enable())
+    {
+        HSV hsv = rgb_matrix_get_hsv();
+        hsv.h += get_modifier_hueshift();
+        RGB rgb = hsv_to_rgb(hsv);
+        rgb_matrix_set_color_by_keycode(led_min, led_max, WIN_BASE, is_modifier_key, rgb.r, rgb.g, rgb.b);
+    }
+
     switch (current_layer) {
         case MAC_BASE:
         case WIN_BASE:
@@ -41,6 +71,9 @@ void rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
                 rgb_matrix_set_color_by_keycode(led_min, led_max, current_layer, is_caps_lock_indicator, CAPS_LOCK_INDICATOR_COLOR);
             }
 #endif
+            if(!get_space_illum_enable())
+                rgb_matrix_set_color_by_keycode(led_min, led_max, current_layer, is_spacebar, RGB_OFF);
+
             break;
         case MAC_FN:
         case WIN_FN:
@@ -81,3 +114,23 @@ bool is_caps_lock_indicator(uint16_t keycode) {
 
 bool is_transparent(uint16_t keycode) { return keycode == KC_TRNS; }
 bool is_not_transparent(uint16_t keycode) { return keycode != KC_TRNS; }
+
+bool is_arrow_key(uint16_t keycode)
+{
+     return ( keycode == KC_UP || keycode == KC_DOWN || keycode == KC_LEFT || keycode == KC_RGHT );
+}
+
+bool is_special_key(uint16_t keycode)
+{
+    return keycode == KC_HOME || keycode == KC_END || keycode == KC_DELETE || keycode == KC_PGUP || keycode == KC_PGDN;
+}
+
+bool is_modifier_key(uint16_t keycode)
+{
+    return keycode == KC_TAB || keycode == KC_CAPS || keycode == KC_LSFT || keycode == KC_LCTL || keycode == KC_RCTL || keycode == KC_LALT || keycode == KC_LGUI || keycode == KC_RALT || keycode == WIN_FN || keycode == KC_RSFT;
+}
+
+bool is_spacebar(uint16_t keycode)
+{
+    return keycode == KC_SPC;
+}
